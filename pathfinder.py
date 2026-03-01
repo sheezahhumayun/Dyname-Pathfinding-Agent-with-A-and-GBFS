@@ -206,3 +206,51 @@ class PathfindingApp:
         self.cost_lbl.config(text=f"Path Cost: {max(0, len(path)-1)}")
         self.time_lbl.config(text=f"Time: {(end_time - start_time)*1000:.2f}ms")
         return path, visited, [f[1] for f in frontier]
+ def run_static_search(self):
+        path, visited, frontier = self.search(self.start_node, self.goal_node)
+        if not path: messagebox.showinfo("Result", "No path found!")
+        self.draw_grid(visited, frontier, path)
+
+    # --- Dynamic Re-planning ---
+    def toggle_dynamic_mode(self):
+        if self.running_dynamic:
+            self.running_dynamic = False
+            self.dyn_btn.config(text="Start Dynamic Mode", bg="#3498db")
+        else:
+            self.running_dynamic = True
+            self.dyn_btn.config(text="Stop Dynamic Mode", bg="#e67e22")
+            self.agent_pos = self.start_node
+            self.dynamic_step()
+
+    def dynamic_step(self):
+        if not self.running_dynamic: return
+        path, visited, frontier = self.search(self.agent_pos, self.goal_node)
+        
+        if not path or len(path) < 2:
+            if self.agent_pos == self.goal_node:
+                messagebox.showinfo("Success", "Goal Reached!")
+            else:
+                messagebox.showwarning("Blocked", "Path is obstructed!")
+            self.toggle_dynamic_mode()
+            return
+
+        self.agent_pos = path[1]
+        
+        # Chance to spawn obstacle
+        if random.random() < 0.15: # 15% chance per step
+            r, c = random.randint(0, self.rows-1), random.randint(0, self.cols-1)
+            if (r, c) not in [self.agent_pos, self.goal_node] and self.grid[(r, c)] == "empty":
+                self.grid[(r, c)] = "wall"
+
+        self.draw_grid(visited, frontier, path)
+        # Draw Agent
+        x1, y1 = self.agent_pos[1]*CELL_SIZE+4, self.agent_pos[0]*CELL_SIZE+4
+        x2, y2 = x1+CELL_SIZE-8, y1+CELL_SIZE-8
+        self.canvas.create_oval(x1, y1, x2, y2, fill="white", outline="black", width=2)
+        
+        self.root.after(150, self.dynamic_step)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PathfindingApp(root)
+    root.mainloop()
