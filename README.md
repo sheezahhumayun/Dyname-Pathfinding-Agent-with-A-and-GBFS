@@ -35,7 +35,6 @@ Red: Visited nodes (explored).
 
 Green Path: The final calculated path.
 
-White Circle: The moving Agent (in Dynamic Mode).
 
 ## 📝 Performance Metrics
 The application tracks and displays:
